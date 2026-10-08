@@ -1,6 +1,10 @@
 import Dashboard from "@/components/Dashboard";
-import { report } from "@/lib/budget";
-
-export default function Home() {
-  return <Dashboard report={report} />;
+import { authenticated } from "@/lib/auth";
+import { dashboardData } from "@/lib/dashboard-data";
+import { redirect } from "next/navigation";
+export const dynamic = "force-dynamic";
+export default async function Home() {
+  if (!await authenticated()) redirect("/entrar");
+  const props = await dashboardData();
+  return <Dashboard {...props} />;
 }

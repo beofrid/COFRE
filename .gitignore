@@ -2,9 +2,10 @@ node_modules/
 .next/
 out/
 .env*
-!.env.example
+.env.example
 *.tsbuildinfo
 .vercel/
 .DS_Store
 src/data/
 *.zip
+antigo/

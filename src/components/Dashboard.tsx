@@ -1,6 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import ImportPanel from "@/components/ImportPanel";
+import ComparisonPanel from "@/components/ComparisonPanel";
+import type { ImportSummary } from "@/lib/sheets";
+import type { Comparison } from "@/lib/compare";
 import {
   Activity, ArrowRight, ArrowUpRight, BarChart3,
   CalendarDays, Check, ChevronLeft, ChevronRight, CircleHelp, Clock3,
@@ -99,7 +103,7 @@ function saveCsv(rows: Dotacao[]) {
   URL.revokeObjectURL(url);
 }
 
-export default function Dashboard({ report }: { report: BudgetReport }) {
+export default function Dashboard({ report, imports, comparison, demo, connected }: { report: BudgetReport; imports: ImportSummary[]; comparison: Comparison | null; demo: boolean; connected: boolean }) {
   const [view, setView] = useState<View>("dashboard");
   const [filters, setFilters] = useState<Selection>(emptySelection);
   const [group, setGroup] = useState<GroupKey>("unidade");
@@ -164,7 +168,7 @@ export default function Dashboard({ report }: { report: BudgetReport }) {
       <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
         <div className="brand">
           <div className="brand-icon"><Landmark size={22} strokeWidth={2.1} /></div>
-          <div className="brand-copy"><strong>COFRE</strong><span>Controle Oficial de Finanças e Recursos da Educação</span></div>
+          <div className="brand-copy"><strong>COFRE</strong><span>CONTROLE ORÇAMENTÁRIO</span></div>
           <button className="sidebar-close" aria-label="Fechar menu" onClick={() => setSidebarOpen(false)}><X size={18} /></button>
         </div>
         <div className="sidebar-section-title">ESPAÇO DE TRABALHO</div>
@@ -172,7 +176,7 @@ export default function Dashboard({ report }: { report: BudgetReport }) {
           {nav.map(({ view: target, label, icon: Icon }) => (
             <button className={`nav-link ${view === target ? "nav-active" : ""}`} onClick={() => openView(target)} key={target}>
               <Icon size={19} strokeWidth={1.9} /><span>{label}</span>
-              {target === "importacoes" && <span className="nav-count">1</span>}
+              {target === "importacoes" && <span className="nav-count">{imports.length}</span>}
             </button>
           ))}
         </nav>
@@ -180,8 +184,8 @@ export default function Dashboard({ report }: { report: BudgetReport }) {
         <div className="sidebar-note">
           <span className="sidebar-note-icon"><ShieldCheck size={17} /></span>
           <strong>Base verificada</strong>
-          <p>Os valores desta referência passaram por validação contábil.</p>
-          <span className="sidebar-note-date"><Check size={13} /> 343 registros consistentes</span>
+          <p>Dados da referência atual passaram por verificação aritmética.</p>
+          <span className="sidebar-note-date"><Check size={13} /> {report.registros.length} registros consistentes</span>
         </div>
         <div className="sidebar-footer"><div className="profile-avatar">SF</div><div><strong>Educação municipal</strong><span>São Francisco de Paula / RS</span></div></div>
       </aside>
@@ -192,7 +196,7 @@ export default function Dashboard({ report }: { report: BudgetReport }) {
             <button className="mobile-menu" onClick={() => setSidebarOpen(true)} aria-label="Abrir menu"><Menu size={21} /></button>
             <span className="breadcrumbs">Orçamento <ChevronRight size={14} /> <strong>{view === "dashboard" ? "Visão geral" : pageTitles[view].title}</strong></span>
           </div>
-          <div className="topbar-right"><span className="updated-dot" /><span>Relatório de {humanDate(report.referencia)}</span><span className="avatar">SF</span></div>
+          <div className="topbar-right"><span className="updated-dot" /><span>{demo ? "DEMONSTRAÇÃO · " : ""}Relatório de {humanDate(report.referencia)}</span><form action="/api/auth/logout" method="post" onSubmit={async e => { e.preventDefault(); await fetch("/api/auth/logout", { method: "POST" }); window.location.assign("/entrar"); }}><button className="logout-btn" type="submit">Sair</button></form></div>
         </header>
 
         <div className="page-container">
@@ -258,7 +262,7 @@ export default function Dashboard({ report }: { report: BudgetReport }) {
                 <div className="panel-header"><div><h2>Maiores saldos disponíveis</h2><p>Dotações com maior disponibilidade</p></div><button className="text-link" onClick={() => openView("dotacoes")}>Ver todas <ArrowRight size={15} /></button></div>
                 {leading.length ? <div className="highlight-list">{leading.map((row) => <div className="highlight-item" key={`${row.id}:${row.fonteCodigo}`}><div className="rank-icon">{row.id}</div><div className="highlight-description"><strong title={row.descricao}>{row.descricao}</strong><span title={`${row.unidade} · ${row.acao}`}>{row.unidade} · {labelTrunc(row.acao, 35)}</span></div><div className="highlight-amount">{money(row.disponivel)}</div></div>)}</div> : <EmptyFilter />}
               </article>
-              <aside className="insight-card"><div className="insight-icon"><CircleHelp size={22} /></div><span className="insight-kicker">LEITURA DOS DADOS</span><h2>Um retrato claro dos recursos.</h2><p>Este painel apresenta a situação do orçamento em <strong>08 de outubro de 2026</strong>. A evolução semanal será exibida após a próxima importação.</p><div className="insight-bottom"><Clock3 size={15} /> 1 referência disponível</div></aside>
+              <aside className="insight-card"><div className="insight-icon"><CircleHelp size={22} /></div><span className="insight-kicker">LEITURA DOS DADOS</span><h2>Um retrato claro dos recursos.</h2><p>Este painel apresenta o orçamento de <strong>{humanDate(report.referencia)}</strong>. {comparison ? "Consulte Comparativos para acompanhar as alterações." : "A evolução semanal será exibida após uma segunda importação."}</p><div className="insight-bottom"><Clock3 size={15} /> {imports.length} referências armazenadas {demo ? "· modo demonstração" : ""}</div></aside>
             </section>
           </>}
 
@@ -272,11 +276,11 @@ export default function Dashboard({ report }: { report: BudgetReport }) {
             </section>
           </>}
 
-          {view === "comparativo" && <section className="placeholder-panel panel"><div className="placeholder-visual"><Activity size={33} /></div><span className="placeholder-badge">PRÓXIMA ETAPA</span><h2>Histórico a partir da segunda referência</h2><p>Já temos a fotografia de {humanDate(report.referencia)}. Com mais uma importação, poderemos calcular aumentos, reduções, dotações novas e dotações ausentes.</p><div className="mini-steps"><div><span className="step-check"><Check size={16} /></span><strong>1ª referência</strong><small>08/10/2026</small></div><span className="step-line" /><div><span className="step-next"><ArrowRight size={16} /></span><strong>2ª referência</strong><small>Aguardando importação</small></div></div></section>}
+          {view === "comparativo" && <ComparisonPanel comparison={comparison} imports={imports} />}
 
-          {view === "importacoes" && <><div className="section-line"><div><h2>Referências cadastradas</h2><span>Uma fotografia orçamentária disponível</span></div><span className="count-pill">1 importação</span></div><section className="panel imports-panel"><div className="import-item"><span className="import-file-icon"><FileSpreadsheet size={23} /></span><div className="import-details"><strong>Relatório completo de dotações disponíveis</strong><span>Referência: {humanDate(report.referencia)} · Exercício {report.exercicio}</span></div><span className="import-count">343 dotações</span><span className="status-ok"><Check size={14} /> Validado</span></div><div className="import-note"><CalendarDays size={17} /><div><strong>Próxima importação semanal</strong><p>O envio de arquivos XLS pelo navegador e o salvamento do histórico no Google Sheets serão implementados na próxima etapa.</p></div></div></section></>}
+          {view === "importacoes" && <ImportPanel imports={imports} connected={connected} demo={demo} />}
 
-          <footer className="page-footer"><span>Assistente de Orçamento · Secretaria Municipal de Educação</span><span>Dados: {humanDate(report.referencia)}</span></footer>
+          <footer className="page-footer"><span>COFRE · Controle Orçamentário e de Finanças de Recursos da Educação</span><span>Dados: {humanDate(report.referencia)}</span></footer>
         </div>
       </main>
     </div>

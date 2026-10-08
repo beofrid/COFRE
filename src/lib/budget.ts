@@ -1,5 +1,3 @@
-import reportData from "@/data/relatorio.json";
-
 export type Dotacao = {
   id: string;
   orgaoCodigo: string;
@@ -26,9 +24,6 @@ export type BudgetReport = {
   municipio: string;
   registros: Dotacao[];
 };
-
-// Base local temporária: substituir por leitura autenticada do Google Sheets numa etapa futura.
-export const report = reportData as BudgetReport;
 
 const brl = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -69,10 +64,29 @@ export function pct(numerator: number, denominator: number) {
   return denominator === 0 ? 0 : (numerator / denominator) * 100;
 }
 
-export function humanDate(date: string) {
-  const [day, month, yearAndTime] = date.split("/");
-  const [year, hour] = yearAndTime.split(" ");
-  return `${day}/${month}/${year} às ${hour}`;
+export function humanDate(date?: string | null): string {
+  if (!date) return "Data não informada";
+
+  const br = date.match(
+    /^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/
+  );
+
+  if (br) {
+    const data = `${br[1]}/${br[2]}/${br[3]}`;
+    return br[4] ? `${data} às ${br[4]}:${br[5]}` : data;
+  }
+
+  const parsed = new Date(date);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return "Data inválida";
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "America/Sao_Paulo",
+  }).format(parsed).replace(", ", " às ");
 }
 
 export function csvFromRows(rows: Dotacao[]) {
