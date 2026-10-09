@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const imports = sheetsConfigured() ? await listImports() : [];
     const last = imports[0];
     const prev = last ? (await getReportsFor([last])).get(last.importId) : null;
-    const comp = prev ? compareReports(prev, report) : null;
+    const comp = prev && prev.exercicio === report.exercicio ? compareReports(prev, report) : null;
     const duplicated = imports.some(x => x.hash === snapshotHash(report));
     const sameReference = imports.some(x => x.referencia === report.referencia && x.exercicio === report.exercicio);
     const reason = duplicated ? "Arquivo já importado." : sameReference ? "Já existe importação com a mesma data/hora de referência." : !sheetsConfigured() ? "Google Sheets não configurado." : null;

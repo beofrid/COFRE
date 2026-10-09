@@ -13,7 +13,8 @@ export async function dashboardData() {
   const data = await getReportsFor(current);
   return {
     report: data.get(current[0].importId)!, imports,
-    comparison: current.length === 2 ? compareReports(data.get(current[1].importId)!, data.get(current[0].importId)!) : null,
+    comparison: current.length === 2 && current[0].exercicio === current[1].exercicio
+      ? compareReports(data.get(current[1].importId)!, data.get(current[0].importId)!) : null,
     demo: false, connected: true,
   };
 }

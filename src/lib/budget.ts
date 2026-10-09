@@ -66,26 +66,12 @@ export function pct(numerator: number, denominator: number) {
 
 export function humanDate(date?: string | null): string {
   if (!date) return "Data não informada";
-
-  const br = date.match(
-    /^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/
-  );
-
-  if (br) {
-    const data = `${br[1]}/${br[2]}/${br[3]}`;
-    return br[4] ? `${data} às ${br[4]}:${br[5]}` : data;
-  }
-
+  const br = date.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
+  if (br) return `${br[1]}/${br[2]}/${br[3]}` + (br[4] ? ` às ${br[4]}:${br[5]}` : "");
   const parsed = new Date(date);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return "Data inválida";
-  }
-
+  if (Number.isNaN(parsed.getTime())) return "Data inválida";
   return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-    timeZone: "America/Sao_Paulo",
+    dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo",
   }).format(parsed).replace(", ", " às ");
 }
 

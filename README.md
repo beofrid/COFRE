@@ -1,12 +1,23 @@
-# COFRE v0.3
+# COFRE v0.4
 
 **COFRE — Controle Orçamentário e de Finanças de Recursos da Educação**
 
 Aplicação Next.js + TypeScript com dados em **COFRE_DB_API**, armazenados via Google Apps Script (sem conta de serviço do Google Cloud).
 
-## Migração da v0.2
+## Correções da v0.4
 
-Esta versão troca as chamadas diretas à Google Sheets API pelas chamadas ao Apps Script.
+- Comparação por **número de rubrica** quando único na referência, evitando que zeros à esquerda alterados pelo Google Sheets façam 343 dotações parecerem novas/ausentes.
+- Se houver rubricas repetidas, utiliza chave completa como alternativa.
+- Botão **Cancelar** após validação: descarta arquivo e prévia sem enviar nada para o Google Sheets. Durante gravação, fica desabilitado (não interrompe um envio em andamento).
+- Ajuste de datas ISO retornadas pelo Apps Script no histórico.
+- Não compara automaticamente referências de exercícios diferentes.
+- Testado com os relatórios fornecidos: **20 alteradas, 0 novas, 0 ausentes, +R$ 66.170,00**, incluindo simulação de perda de zeros à esquerda.
+
+**Instalação:** atualize somente o Next.js. **Não é necessário republicar o Apps Script** para esta correção. Preserve o `.env.local` do seu projeto; não o envie ao GitHub.
+
+## Instalação do zero (para referência)
+
+Desde a v0.3, as chamadas à Google Sheets API são realizadas pelo Apps Script.
 
 **Antes de usar:** preserve seu `.env.local` local. O pacote contém somente `.env.example`, nunca suas credenciais.
 
@@ -47,7 +58,7 @@ As duas abas da planilha continuam com os nomes **Importacoes** e **Dotacoes**. 
 ## Publicação na Vercel
 
 - Adicione `APP_PASSWORD`, `SESSION_SECRET`, `COFRE_SCRIPT_URL` e `COFRE_API_KEY` às variáveis de ambiente da Vercel.
-- Não configure `GOOGLE_SHEETS_ID`, `GOOGLE_CLIENT_EMAIL` ou `GOOGLE_PRIVATE_KEY`: a v0.3 não as utiliza.
+- Não configure `GOOGLE_SHEETS_ID`, `GOOGLE_CLIENT_EMAIL` ou `GOOGLE_PRIVATE_KEY`: estas versões não as utilizam.
 - Use um repositório **privado**: o código usa apenas dados ilustrativos; seus dados reais em `src/data/` são ignorados pelo Git.
 
 ## Limites conhecidos
@@ -55,7 +66,7 @@ As duas abas da planilha continuam com os nomes **Importacoes** e **Dotacoes**. 
 - O Apps Script tem cotas e tempo máximo de execução; uso semanal individual é o objetivo inicial.
 - Este modelo usa uma senha compartilhada como MVP; para múltiplos usuários, evolua a autenticação.
 - Não há transações no Google Sheets. Se uma gravação for interrompida, confira `Importacoes` e `Dotacoes` antes de repetir.
-- A validação monetária usa centavos inteiros. A chave de identificação de cada dotação combina órgão, unidade, ação, código, natureza e fonte.
+- A validação monetária usa centavos inteiros. A chave completa para validação combina órgão, unidade, ação, código, natureza e fonte; o comparativo usa rubricas únicas como identificador principal.
 - Não há teste com sua implantação real no pacote: o teste de integração requer suas credenciais privadas.
 
 ## Verificações

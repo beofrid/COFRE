@@ -31,6 +31,14 @@ export default function ImportPanel({ imports, connected, demo }: { imports: Imp
     catch (e) { setError(e instanceof Error ? e.message : "Arquivo inválido."); }
     finally { setBusy(false); }
   }
+  function cancelPreview() {
+    if (busy) return;
+    setPreview(null);
+    setFile(null);
+    setError("");
+    setMessage("");
+    if (input.current) input.current.value = "";
+  }
   async function persist() {
     setBusy(true); setError(""); setMessage("");
     try {
@@ -50,7 +58,10 @@ export default function ImportPanel({ imports, connected, demo }: { imports: Imp
       {preview && <div className="import-preview"><strong><Check size={16}/> Arquivo validado</strong>
         <div className="preview-stats"><div><span>Referência</span><b>{preview.referencia}</b></div><div><span>Dotações</span><b>{preview.registros}</b></div><div><span>Disponibilidade</span><b>{money(preview.saldoCentavos)}</b></div></div>
         {preview.comparativo && <p>Em relação à última referência: <b>{preview.comparativo.alteradas} alteradas</b>, {preview.comparativo.novas} novas, {preview.comparativo.ausentes} ausentes; variação de {money(preview.comparativo.diferenca)}.</p>}
-        <button className="confirm-btn" disabled={busy || !preview.podeSalvar} onClick={persist}>{busy ? "Salvando…" : "Confirmar e salvar histórico"}</button>
+        <div className="preview-actions">
+          <button className="confirm-btn" disabled={busy || !preview.podeSalvar} onClick={persist}>{busy ? "Salvando…" : "Confirmar e salvar histórico"}</button>
+          <button className="cancel-btn" type="button" disabled={busy} onClick={cancelPreview}>Cancelar</button>
+        </div>
         {!preview.podeSalvar && <p>{preview.motivo ?? "Não é possível salvar esta referência."}</p>}
       </div>}
       {error && <div role="alert" className="import-alert error">{error}</div>}
